@@ -2,6 +2,7 @@ import os
 import random
 from datetime import date, datetime, timedelta
 
+
 from flask import (
     Flask,
     jsonify,
@@ -50,6 +51,7 @@ def seed_dummy_data() -> None:
             last_active_date=date.today(),
             wallet=0,
         )
+
         quest_chain = [
             Quest(
                 title="Awaken the System",
@@ -61,6 +63,7 @@ def seed_dummy_data() -> None:
                 graph_x=80,
                 graph_y=140,
                 dependencies="",
+
             ),
             Quest(
                 title="Stabilize the Core",
@@ -72,6 +75,7 @@ def seed_dummy_data() -> None:
                 graph_x=280,
                 graph_y=80,
                 dependencies="1",
+
             ),
             Quest(
                 title="Architect's Trial",
@@ -83,6 +87,7 @@ def seed_dummy_data() -> None:
                 graph_x=480,
                 graph_y=180,
                 dependencies="2",
+
             ),
         ]
 
@@ -167,6 +172,7 @@ def dashboard():
         return redirect(url_for("architect"))
     if check_survival(player):
         return redirect(url_for("game_over"))
+
     quests = Quest.query.order_by(Quest.graph_x.asc()).all()
     edges = []
     for idx in range(len(quests) - 1):
@@ -184,6 +190,7 @@ def dashboard():
 @app.route("/game_over")
 def game_over():
     return render_template("game_over.html")
+
 
 
 @app.route("/download_subject/<int:quest_id>")
@@ -222,6 +229,7 @@ def track_time():
 
     player.wallet += 1
     upsert_daily_log(seconds=60)
+
     db.session.commit()
 
     session["last_heartbeat"] = datetime.utcnow().isoformat()

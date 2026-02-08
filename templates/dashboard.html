@@ -16,6 +16,7 @@
     .quest-node {
       width: 52px;
       height: 52px;
+
       border-radius: 9999px;
       display: flex;
       align-items: center;
@@ -30,6 +31,7 @@
 
     .quest-locked {
       background: rgba(75, 85, 99, 0.7);
+
       color: #e5e7eb;
     }
 
@@ -50,6 +52,7 @@
       }
       70% {
         box-shadow: 0 0 0 20px rgba(0, 234, 255, 0);
+
       }
       100% {
         box-shadow: 0 0 0 0 rgba(0, 234, 255, 0);
@@ -226,6 +229,7 @@
     </main>
   </div>
 
+
   <div id="quest-modal" class="fixed inset-0 bg-black/70 hidden items-center justify-center">
     <div class="bg-[#111827] border border-[#00eaff] rounded-2xl p-6 w-full max-w-lg shadow-2xl">
       <div class="flex items-center justify-between mb-4">
@@ -235,6 +239,7 @@
       <p class="text-sm text-slate-400 mb-4">Prepare for active mode. Timing is strict.</p>
       <div class="flex items-center gap-4 mb-4">
         <button id="start-btn" class="px-4 py-2 bg-[#00eaff]/20 border border-[#00eaff] rounded-lg">Start Timer</button>
+
         <button id="stop-btn" class="px-4 py-2 bg-red-500/20 border border-red-400 rounded-lg">Stop</button>
         <a id="subject-link" href="#" class="text-sm text-[#00eaff] underline">Download Subject</a>
       </div>
@@ -243,6 +248,7 @@
         <label class="text-sm text-slate-400">Submit Proof</label>
         <input type="file" name="submission" class="block w-full text-sm text-slate-300" required />
         <button type="submit" class="px-4 py-2 bg-[#00eaff]/20 border border-[#00eaff] rounded-lg">Submit Proof</button>
+
       </form>
       <p id="submission-result" class="text-sm text-slate-300 mt-3"></p>
     </div>

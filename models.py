@@ -10,6 +10,7 @@ class Player(db.Model):
     __tablename__ = "players"
 
     id = db.Column(db.Integer, primary_key=True)
+
     level = db.Column(db.Integer, nullable=False, default=1)
     xp = db.Column(db.Integer, nullable=False, default=0)
     hp = db.Column(db.Integer, nullable=False, default=100)
@@ -27,6 +28,7 @@ class DailyLog(db.Model):
     status = db.Column(db.String(20), nullable=False, default="FROZEN")
 
 
+
 class Quest(db.Model):
     __tablename__ = "quests"
 
@@ -40,6 +42,7 @@ class Quest(db.Model):
     graph_x = db.Column(db.Integer, nullable=False, default=0)
     graph_y = db.Column(db.Integer, nullable=False, default=0)
     dependencies = db.Column(db.String(255))
+
     loot = db.relationship("Loot", backref="quest", uselist=False, cascade="all, delete-orphan")
 
 
