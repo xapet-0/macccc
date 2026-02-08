@@ -49,6 +49,9 @@ class EagleAgent:
             "peak_performance_day": peak_label,
             "weakness": weakness,
             "momentum": f\"{momentum:.2f}\",
+        return {
+            "peak_performance_day": peak_label,
+            "weakness": weakness,
         }
 
     def recommend_next_step(self, user_id: int) -> Dict[str, str]:
@@ -74,6 +77,7 @@ class EagleAgent:
 
         momentum = self._momentum_score(user_id)
         if failing_count >= 2 or momentum < 2.0:
+        if failing_count >= 2:
             system_notify(user, "System Assist: Try a lower tier project to stabilize progress.", "warning")
             candidate = min(available_projects, key=lambda project: project.tier, default=None)
         else:
