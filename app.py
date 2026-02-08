@@ -1,5 +1,7 @@
 import os
 import random
+
+
 from datetime import date, datetime, timedelta
 
 
@@ -14,6 +16,7 @@ from flask import (
     url_for,
 )
 from werkzeug.utils import secure_filename
+
 
 from models import DailyLog, Log, Loot, Player, Quest, db
 
@@ -42,14 +45,19 @@ def seed_dummy_data() -> None:
         if Player.query.first():
             return
 
+
         player = Player(
+            name="Mariam",
+
             level=1,
             xp=0,
             hp=100,
             mana=100,
-            black_hole_days=100,
-            last_active_date=date.today(),
+            rank="E",
             wallet=0,
+            black_hole_days=100,
+            daily_target_hours=17.0,
+
         )
 
         quest_chain = [
@@ -174,10 +182,15 @@ def dashboard():
         return redirect(url_for("game_over"))
 
     quests = Quest.query.order_by(Quest.graph_x.asc()).all()
+
+    if player:
+        calculate_black_hole(player)
     edges = []
     for idx in range(len(quests) - 1):
         edges.append((quests[idx], quests[idx + 1]))
-    heatmap_days = get_heatmap_days(90)
+    heatmap_data = get_heatmap_data()
+    heatmap_days = build_heatmap_days(90, heatmap_data)
+
     return render_template(
         "dashboard.html",
         player=player,
@@ -186,10 +199,6 @@ def dashboard():
         heatmap_days=heatmap_days,
     )
 
-
-@app.route("/game_over")
-def game_over():
-    return render_template("game_over.html")
 
 
 
@@ -228,7 +237,9 @@ def track_time():
         return jsonify({"error": "No player"}), 404
 
     player.wallet += 1
-    upsert_daily_log(seconds=60)
+
+    upsert_daily_log(minutes=1)
+
 
     db.session.commit()
 
@@ -255,73 +266,77 @@ def evaluate_submission() -> int:
     return random.randint(50, 100)
 
 
-def check_survival(player: Player) -> bool:
-    today = date.today()
-    if not player.last_active_date:
-        player.last_active_date = today
-        db.session.commit()
-        return False
-    last_active = player.last_active_date
-    delta_days = (today - last_active).days
-    if delta_days <= 0:
-        return player.black_hole_days <= 0
 
-    for offset in range(1, delta_days + 1):
-        missing_day = last_active + timedelta(days=offset)
-        if not DailyLog.query.get(missing_day):
-            db.session.add(DailyLog(date=missing_day, total_seconds=0, status="FROZEN"))
-    player.black_hole_days = max(0, player.black_hole_days - delta_days)
-    player.last_active_date = today
+def calculate_black_hole(player: Player) -> None:
+    today = date.today()
+    last_update = session.get("black_hole_updated")
+    if last_update == today.isoformat():
+        return
+    daily_log = DailyLog.query.get(today)
+    daily_hours = daily_log.total_hours if daily_log else 0.0
+    if daily_hours < 4:
+        player.black_hole_days = max(0, player.black_hole_days - 1)
+    elif daily_hours > 10:
+        player.black_hole_days += 1
     db.session.commit()
-    return player.black_hole_days <= 0
+    session["black_hole_updated"] = today.isoformat()
 
 
-def get_heatmap_days(days: int) -> list[dict[str, str]]:
+def get_heatmap_data() -> dict[str, float]:
+    cutoff = date.today() - timedelta(days=365)
+    logs = DailyLog.query.filter(DailyLog.date >= cutoff).all()
+    return {log.date.isoformat(): log.total_hours for log in logs}
+
+
+def build_heatmap_days(days: int, heatmap_data: dict[str, float]) -> list[dict[str, str]]:
     today = date.today()
-    start_date = today - timedelta(days=days - 1)
-    logs = DailyLog.query.filter(DailyLog.date >= start_date).all()
-    log_map = {log.date: log for log in logs}
     output = []
-    for offset in range(days):
-        current_day = start_date + timedelta(days=offset)
-        log = log_map.get(current_day)
-        total_seconds = log.total_seconds if log else 0
-        status = log.status if log else "FROZEN"
+    for offset in range(days - 1, -1, -1):
+        current_day = today - timedelta(days=offset)
+        key = current_day.isoformat()
+        hours = heatmap_data.get(key, 0.0)
         output.append(
             {
-                "date": current_day.isoformat(),
-                "total_seconds": total_seconds,
-                "level": heatmap_level(status),
+                "date": key,
+                "level": heatmap_level(hours),
+
             }
         )
     return output
 
 
-def heatmap_level(status: str) -> str:
-    if status == "BURNING":
-        return "level-burning"
-    if status == "ACTIVE":
-        return "level-active"
-    return "level-frozen"
+def heatmap_level(hours: float) -> str:
+    if hours >= 10:
+        return "level-4"
+    if hours >= 5:
+        return "level-3"
+    if hours >= 2:
+        return "level-2"
+    if hours > 0:
+        return "level-1"
+    return "level-0"
 
 
-def upsert_daily_log(seconds: int) -> None:
+def upsert_daily_log(minutes: int) -> None:
     today = date.today()
     daily_log = DailyLog.query.get(today)
+    increment = minutes / 60
     if daily_log:
-        daily_log.total_seconds += seconds
+        daily_log.total_hours += increment
     else:
-        daily_log = DailyLog(date=today, total_seconds=seconds)
+        daily_log = DailyLog(date=today, total_hours=increment)
         db.session.add(daily_log)
-    daily_log.status = status_for_seconds(daily_log.total_seconds)
+    daily_log.status = status_for_hours(daily_log.total_hours)
 
 
-def status_for_seconds(seconds: int) -> str:
-    if seconds > 14400:
+def status_for_hours(hours: float) -> str:
+    if hours >= 10:
         return "BURNING"
-    if seconds > 0:
+    if hours >= 4:
+
         return "ACTIVE"
     return "FROZEN"
+
 
 
 @app.route("/submit_quest/<int:quest_id>", methods=["POST"])
