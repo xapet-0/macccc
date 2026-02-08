@@ -1,4 +1,5 @@
 from datetime import datetime
+
 from flask_sqlalchemy import SQLAlchemy
 
 
@@ -9,13 +10,23 @@ class Player(db.Model):
     __tablename__ = "players"
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(120), nullable=False)
+
     level = db.Column(db.Integer, nullable=False, default=1)
     xp = db.Column(db.Integer, nullable=False, default=0)
     hp = db.Column(db.Integer, nullable=False, default=100)
     mana = db.Column(db.Integer, nullable=False, default=100)
-    rank = db.Column(db.String(10), nullable=False, default="E")
+    black_hole_days = db.Column(db.Integer, nullable=False, default=100)
+    last_active_date = db.Column(db.Date)
     wallet = db.Column(db.Integer, nullable=False, default=0)
+
+
+class DailyLog(db.Model):
+    __tablename__ = "daily_logs"
+
+    date = db.Column(db.Date, primary_key=True)
+    total_seconds = db.Column(db.Integer, nullable=False, default=0)
+    status = db.Column(db.String(20), nullable=False, default="FROZEN")
+
 
 
 class Quest(db.Model):
@@ -30,6 +41,8 @@ class Quest(db.Model):
     eval_script = db.Column(db.String(255))
     graph_x = db.Column(db.Integer, nullable=False, default=0)
     graph_y = db.Column(db.Integer, nullable=False, default=0)
+    dependencies = db.Column(db.String(255))
+
     loot = db.relationship("Loot", backref="quest", uselist=False, cascade="all, delete-orphan")
 
 

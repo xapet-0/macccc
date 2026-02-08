@@ -1,6 +1,7 @@
 import os
 import random
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
+
 
 from flask import (
     Flask,
@@ -14,7 +15,7 @@ from flask import (
 )
 from werkzeug.utils import secure_filename
 
-from models import Log, Loot, Player, Quest, db
+from models import DailyLog, Log, Loot, Player, Quest, db
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -41,7 +42,16 @@ def seed_dummy_data() -> None:
         if Player.query.first():
             return
 
-        player = Player(name="Mariam", level=1, xp=0, hp=100, mana=100, rank="E", wallet=0)
+        player = Player(
+            level=1,
+            xp=0,
+            hp=100,
+            mana=100,
+            black_hole_days=100,
+            last_active_date=date.today(),
+            wallet=0,
+        )
+
         quest_chain = [
             Quest(
                 title="Awaken the System",
@@ -52,6 +62,8 @@ def seed_dummy_data() -> None:
                 eval_script="",
                 graph_x=80,
                 graph_y=140,
+                dependencies="",
+
             ),
             Quest(
                 title="Stabilize the Core",
@@ -62,6 +74,8 @@ def seed_dummy_data() -> None:
                 eval_script="",
                 graph_x=280,
                 graph_y=80,
+                dependencies="1",
+
             ),
             Quest(
                 title="Architect's Trial",
@@ -72,6 +86,8 @@ def seed_dummy_data() -> None:
                 eval_script="",
                 graph_x=480,
                 graph_y=180,
+                dependencies="2",
+
             ),
         ]
 
@@ -152,11 +168,29 @@ def architect():
 @app.route("/dashboard")
 def dashboard():
     player = Player.query.first()
+    if not player:
+        return redirect(url_for("architect"))
+    if check_survival(player):
+        return redirect(url_for("game_over"))
+
     quests = Quest.query.order_by(Quest.graph_x.asc()).all()
     edges = []
     for idx in range(len(quests) - 1):
         edges.append((quests[idx], quests[idx + 1]))
-    return render_template("dashboard.html", player=player, quests=quests, edges=edges)
+    heatmap_days = get_heatmap_days(90)
+    return render_template(
+        "dashboard.html",
+        player=player,
+        quests=quests,
+        edges=edges,
+        heatmap_days=heatmap_days,
+    )
+
+
+@app.route("/game_over")
+def game_over():
+    return render_template("game_over.html")
+
 
 
 @app.route("/download_subject/<int:quest_id>")
@@ -194,6 +228,8 @@ def track_time():
         return jsonify({"error": "No player"}), 404
 
     player.wallet += 1
+    upsert_daily_log(seconds=60)
+
     db.session.commit()
 
     session["last_heartbeat"] = datetime.utcnow().isoformat()
@@ -217,6 +253,75 @@ def stop_session():
 
 def evaluate_submission() -> int:
     return random.randint(50, 100)
+
+
+def check_survival(player: Player) -> bool:
+    today = date.today()
+    if not player.last_active_date:
+        player.last_active_date = today
+        db.session.commit()
+        return False
+    last_active = player.last_active_date
+    delta_days = (today - last_active).days
+    if delta_days <= 0:
+        return player.black_hole_days <= 0
+
+    for offset in range(1, delta_days + 1):
+        missing_day = last_active + timedelta(days=offset)
+        if not DailyLog.query.get(missing_day):
+            db.session.add(DailyLog(date=missing_day, total_seconds=0, status="FROZEN"))
+    player.black_hole_days = max(0, player.black_hole_days - delta_days)
+    player.last_active_date = today
+    db.session.commit()
+    return player.black_hole_days <= 0
+
+
+def get_heatmap_days(days: int) -> list[dict[str, str]]:
+    today = date.today()
+    start_date = today - timedelta(days=days - 1)
+    logs = DailyLog.query.filter(DailyLog.date >= start_date).all()
+    log_map = {log.date: log for log in logs}
+    output = []
+    for offset in range(days):
+        current_day = start_date + timedelta(days=offset)
+        log = log_map.get(current_day)
+        total_seconds = log.total_seconds if log else 0
+        status = log.status if log else "FROZEN"
+        output.append(
+            {
+                "date": current_day.isoformat(),
+                "total_seconds": total_seconds,
+                "level": heatmap_level(status),
+            }
+        )
+    return output
+
+
+def heatmap_level(status: str) -> str:
+    if status == "BURNING":
+        return "level-burning"
+    if status == "ACTIVE":
+        return "level-active"
+    return "level-frozen"
+
+
+def upsert_daily_log(seconds: int) -> None:
+    today = date.today()
+    daily_log = DailyLog.query.get(today)
+    if daily_log:
+        daily_log.total_seconds += seconds
+    else:
+        daily_log = DailyLog(date=today, total_seconds=seconds)
+        db.session.add(daily_log)
+    daily_log.status = status_for_seconds(daily_log.total_seconds)
+
+
+def status_for_seconds(seconds: int) -> str:
+    if seconds > 14400:
+        return "BURNING"
+    if seconds > 0:
+        return "ACTIVE"
+    return "FROZEN"
 
 
 @app.route("/submit_quest/<int:quest_id>", methods=["POST"])

@@ -6,22 +6,32 @@
   <title>Mariam Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
+    .glass {
+      background: rgba(15, 23, 42, 0.55);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(12px);
+    }
+
     .quest-node {
-      width: 50px;
-      height: 50px;
+      width: 52px;
+      height: 52px;
+
       border-radius: 9999px;
       display: flex;
       align-items: center;
       justify-content: center;
       position: absolute;
-      font-size: 0.75rem;
+      font-size: 0.8rem;
       font-weight: 600;
       color: #0b0f19;
       cursor: pointer;
+      backdrop-filter: blur(6px);
     }
 
     .quest-locked {
-      background: #4b5563;
+      background: rgba(75, 85, 99, 0.7);
+
       color: #e5e7eb;
     }
 
@@ -41,7 +51,8 @@
         box-shadow: 0 0 0 0 rgba(0, 234, 255, 0.7);
       }
       70% {
-        box-shadow: 0 0 0 18px rgba(0, 234, 255, 0);
+        box-shadow: 0 0 0 20px rgba(0, 234, 255, 0);
+
       }
       100% {
         box-shadow: 0 0 0 0 rgba(0, 234, 255, 0);
@@ -67,75 +78,157 @@
     .quest-node:hover .tooltip {
       opacity: 1;
     }
+
+    .heatmap-grid {
+      display: grid;
+      grid-template-columns: repeat(30, 1fr);
+      gap: 6px;
+    }
+
+    .heatmap-cell {
+      width: 16px;
+      height: 16px;
+      border-radius: 5px;
+      border: 1px solid rgba(148, 163, 184, 0.15);
+    }
+
+    .level-frozen { background: rgba(148, 163, 184, 0.2); }
+    .level-active { background: rgba(0, 234, 255, 0.65); }
+    .level-burning {
+      background: rgba(250, 204, 21, 0.95);
+      box-shadow: 0 0 12px rgba(250, 204, 21, 0.5);
+    }
+
+    .pulse-danger {
+      animation: dangerPulse 1.8s infinite;
+    }
+
+    @keyframes dangerPulse {
+      0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
+      70% { box-shadow: 0 0 0 18px rgba(239, 68, 68, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
   </style>
 </head>
 <body class="bg-[#0b0f19] text-slate-100 min-h-screen">
-  <header class="px-10 py-6 border-b border-slate-800 flex items-center justify-between">
-    <div>
-      <h1 class="text-2xl font-semibold text-[#00eaff]">Mariam | Holy Graph</h1>
-      <p class="text-sm text-slate-400">Solo Leveling Dashboard</p>
-    </div>
-    <div class="flex items-center gap-6">
-      <div>
-        <p class="text-xs uppercase text-slate-400">Level</p>
-        <p class="text-lg font-semibold">{{ player.level if player else 1 }}</p>
-      </div>
-      <div>
-        <p class="text-xs uppercase text-slate-400">HP</p>
-        <div class="w-40 h-3 bg-slate-800 rounded-full overflow-hidden">
-          <div class="h-full bg-red-500" style="width: {{ player.hp if player else 100 }}%"></div>
-        </div>
-      </div>
-      <div>
-        <p class="text-xs uppercase text-slate-400">MP</p>
-        <div class="w-40 h-3 bg-slate-800 rounded-full overflow-hidden">
-          <div class="h-full bg-blue-500" style="width: {{ player.mana if player else 100 }}%"></div>
-        </div>
-      </div>
-      <div>
-        <p class="text-xs uppercase text-slate-400">Gold</p>
-        <p class="text-lg font-semibold" id="wallet-count">{{ player.wallet if player else 0 }}</p>
-      </div>
-    </div>
-  </header>
+  <div class="flex min-h-screen">
+    <aside class="w-20 glass border-r border-slate-800 flex flex-col items-center py-8 gap-8 fixed left-0 top-0 bottom-0">
+      <div class="w-12 h-12 rounded-2xl bg-[#00eaff]/20 border border-[#00eaff] flex items-center justify-center">⚡</div>
+      <nav class="flex flex-col gap-6 text-xl text-slate-400">
+        <span class="hover:text-[#00eaff]">🏠</span>
+        <span class="hover:text-[#00eaff]">🗺️</span>
+        <span class="hover:text-[#00eaff]">👤</span>
+        <span class="hover:text-[#00eaff]">🛒</span>
+      </nav>
+    </aside>
 
-  <main class="relative px-10 py-10">
-    <div class="relative w-full max-w-5xl h-[500px] mx-auto border border-slate-800 rounded-2xl bg-[#0f172a]/60 overflow-hidden">
-      <svg class="absolute inset-0 w-full h-full">
-        {% for edge in edges %}
-          <line
-            x1="{{ edge[0].graph_x + 25 }}"
-            y1="{{ edge[0].graph_y + 25 }}"
-            x2="{{ edge[1].graph_x + 25 }}"
-            y2="{{ edge[1].graph_y + 25 }}"
-            stroke="#1e293b"
-            stroke-width="2"
-          />
-        {% endfor %}
-      </svg>
-
-      {% for quest in quests %}
-        {% set status_class = 'quest-locked' if quest.status == 'LOCKED' else 'quest-active' if quest.status == 'ACTIVE' else 'quest-completed' %}
-        <div
-          class="quest-node {{ status_class }}"
-          style="left: {{ quest.graph_x }}px; top: {{ quest.graph_y }}px;"
-          data-quest-id="{{ quest.id }}"
-          data-quest-title="{{ quest.title }}"
-          data-quest-status="{{ quest.status }}"
-          data-subject-url="{{ url_for('download_subject', quest_id=quest.id) }}"
-        >
-          {% if quest.status == 'LOCKED' %}
-            🔒
-            <span class="tooltip">Locked Loot ✨</span>
-          {% elif quest.status == 'ACTIVE' %}
-            ▶
-          {% else %}
-            ★
-          {% endif %}
+    <main class="flex-1 ml-20 px-10 py-8">
+      <header class="glass rounded-3xl px-6 py-4 flex items-center justify-between mb-8">
+        <div>
+          <p class="text-xs uppercase text-slate-400">System</p>
+          <h1 class="text-2xl font-semibold text-[#00eaff]">SYSTEM: ONLINE</h1>
         </div>
-      {% endfor %}
-    </div>
-  </main>
+        {% set danger = player and player.black_hole_days < 10 %}
+        <div class="text-right">
+          <p class="text-xs uppercase text-slate-400">Black Hole</p>
+          <p class="text-lg font-semibold {{ 'text-red-400 pulse-danger' if danger else 'text-[#00eaff]' }}">
+            {{ player.black_hole_days if player else 100 }} DAYS REMAINING
+          </p>
+        </div>
+      </header>
+
+      <section class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <div class="xl:col-span-2 glass rounded-3xl p-6 relative overflow-hidden">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold text-[#00eaff]">Holy Graph</h2>
+            <div class="flex items-center gap-4 text-xs text-slate-400">
+              <span>HP: {{ player.hp if player else 100 }}</span>
+              <span>MP: {{ player.mana if player else 100 }}</span>
+              <span>Gold: <span id="wallet-count">{{ player.wallet if player else 0 }}</span></span>
+            </div>
+          </div>
+          <div class="relative w-full h-[520px] rounded-2xl bg-[#0f172a]/50 border border-slate-800 overflow-hidden">
+            <svg class="absolute inset-0 w-full h-full">
+              {% for edge in edges %}
+                <line
+                  x1="{{ edge[0].graph_x + 25 }}"
+                  y1="{{ edge[0].graph_y + 25 }}"
+                  x2="{{ edge[1].graph_x + 25 }}"
+                  y2="{{ edge[1].graph_y + 25 }}"
+                  stroke="#1e293b"
+                  stroke-width="2"
+                />
+              {% endfor %}
+            </svg>
+
+            {% for quest in quests %}
+              {% set status_class = 'quest-locked' if quest.status == 'LOCKED' else 'quest-active' if quest.status == 'ACTIVE' else 'quest-completed' %}
+              <div
+                class="quest-node {{ status_class }}"
+                style="left: {{ quest.graph_x }}px; top: {{ quest.graph_y }}px;"
+                data-quest-id="{{ quest.id }}"
+                data-quest-title="{{ quest.title }}"
+                data-quest-status="{{ quest.status }}"
+                data-subject-url="{{ url_for('download_subject', quest_id=quest.id) }}"
+              >
+                {% if quest.status == 'LOCKED' %}
+                  🔒
+                  <span class="tooltip">Locked Loot ✨</span>
+                {% elif quest.status == 'ACTIVE' %}
+                  ▶
+                {% else %}
+                  ★
+                {% endif %}
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="glass rounded-3xl p-6 flex flex-col gap-6">
+          <div>
+            <h2 class="text-lg font-semibold text-[#00eaff]">Player Core</h2>
+            <p class="text-xs text-slate-400">Vitals & Focus</p>
+          </div>
+          <div>
+            <p class="text-xs uppercase text-slate-400">Level</p>
+            <p class="text-3xl font-semibold">{{ player.level if player else 1 }}</p>
+          </div>
+          <div>
+            <p class="text-xs uppercase text-slate-400">HP</p>
+            <div class="w-full h-3 bg-slate-800 rounded-full overflow-hidden">
+              <div class="h-full bg-red-500" style="width: {{ player.hp if player else 100 }}%"></div>
+            </div>
+          </div>
+          <div>
+            <p class="text-xs uppercase text-slate-400">MP</p>
+            <div class="w-full h-3 bg-slate-800 rounded-full overflow-hidden">
+              <div class="h-full bg-blue-500" style="width: {{ player.mana if player else 100 }}%"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="glass rounded-3xl p-6 mt-8">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold text-[#00eaff]">Logtime Graph</h2>
+          <span class="text-xs text-slate-400">Last 90 Days</span>
+        </div>
+        <div class="heatmap-grid">
+          {% for day in heatmap_days %}
+            <div class="heatmap-cell {{ day.level }}" title="{{ day.date }}"></div>
+          {% endfor %}
+        </div>
+        <div class="flex items-center gap-3 text-xs text-slate-400 mt-4">
+          <span>0h</span>
+          <span class="heatmap-cell level-frozen"></span>
+          <span class="heatmap-cell level-active"></span>
+          <span class="heatmap-cell level-burning"></span>
+          <span>5h+</span>
+        </div>
+      </section>
+    </main>
+  </div>
+
 
   <div id="quest-modal" class="fixed inset-0 bg-black/70 hidden items-center justify-center">
     <div class="bg-[#111827] border border-[#00eaff] rounded-2xl p-6 w-full max-w-lg shadow-2xl">
@@ -145,15 +238,17 @@
       </div>
       <p class="text-sm text-slate-400 mb-4">Prepare for active mode. Timing is strict.</p>
       <div class="flex items-center gap-4 mb-4">
-        <button id="start-btn" class="px-4 py-2 bg-[#00eaff]/20 border border-[#00eaff] rounded-lg">Start</button>
+        <button id="start-btn" class="px-4 py-2 bg-[#00eaff]/20 border border-[#00eaff] rounded-lg">Start Timer</button>
+
         <button id="stop-btn" class="px-4 py-2 bg-red-500/20 border border-red-400 rounded-lg">Stop</button>
         <a id="subject-link" href="#" class="text-sm text-[#00eaff] underline">Download Subject</a>
       </div>
       <div class="text-lg font-semibold text-white mb-4">Timer: <span id="timer">00:00</span></div>
       <form id="submission-form" class="space-y-3" enctype="multipart/form-data">
-        <label class="text-sm text-slate-400">Submit Quest Proof</label>
+        <label class="text-sm text-slate-400">Submit Proof</label>
         <input type="file" name="submission" class="block w-full text-sm text-slate-300" required />
-        <button type="submit" class="px-4 py-2 bg-[#00eaff]/20 border border-[#00eaff] rounded-lg">Submit</button>
+        <button type="submit" class="px-4 py-2 bg-[#00eaff]/20 border border-[#00eaff] rounded-lg">Submit Proof</button>
+
       </form>
       <p id="submission-result" class="text-sm text-slate-300 mt-3"></p>
     </div>
