@@ -51,3 +51,4 @@ def build_skill_radar(user_id: int) -> dict[str, int]:
             if label in totals:
                 totals[label] += int(value)
     return totals
+    )
