@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Eagle OS | Neural HUD</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    .glass {
+      background: rgba(15, 23, 42, 0.55);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(12px);
+    }
+
+    .shake {
+      animation: shake 0.6s infinite;
+    }
+
+    @keyframes shake {
+      0% { transform: translate(0); }
+      25% { transform: translate(-2px, 2px); }
+      50% { transform: translate(2px, -2px); }
+      75% { transform: translate(-2px, -2px); }
+      100% { transform: translate(0); }
+    }
+
+    .glitch {
+      position: relative;
+      animation: glitch 1.5s infinite;
+    }
+
+    @keyframes glitch {
+      0% { clip-path: inset(0 0 90% 0); }
+      50% { clip-path: inset(10% 0 30% 0); }
+      100% { clip-path: inset(0 0 90% 0); }
+    }
+
+    .heatmap-grid {
+      display: grid;
+      grid-template-columns: repeat(53, 1fr);
+      gap: 4px;
+    }
+
+    .heatmap-cell {
+      width: 10px;
+      height: 10px;
+      border-radius: 4px;
+    }
+
+    .shadow-glow {
+      box-shadow: 0 0 10px rgba(250, 204, 21, 0.6);
+    }
+  </style>
+</head>
+<body class="bg-[#0b0f19] text-slate-100 min-h-screen">
+  <div class="flex min-h-screen">
+    <aside class="w-20 glass fixed left-0 top-0 bottom-0 flex flex-col items-center py-8 gap-8">
+      <div class="w-12 h-12 rounded-2xl bg-[#00eaff]/20 border border-[#00eaff] flex items-center justify-center">⚡</div>
+      <nav class="flex flex-col gap-6 text-xl text-slate-400">
+        <span class="hover:text-[#00eaff]">🧬</span>
+        <span class="hover:text-[#00eaff]">🛰️</span>
+        <span class="hover:text-[#00eaff]">🎒</span>
+        <span class="hover:text-[#00eaff]">🛡️</span>
+      </nav>
+    </aside>
+
+    <main class="flex-1 ml-20 px-8 py-8" x-data="{ showModal: false }">
+      <header class="glass rounded-3xl px-6 py-4 flex items-center justify-between mb-8">
+        <div>
+          <p class="text-xs uppercase text-slate-400">System</p>
+          <h1 class="text-2xl font-semibold text-[#00eaff]">SYSTEM: ONLINE</h1>
+        </div>
+        {% set days_remaining = user.time_until_blackhole() %}
+        {% set critical = days_remaining < 10 %}
+        {% set glitch = days_remaining < 1 %}
+        <div class="text-right">
+          <p class="text-xs uppercase text-slate-400">Black Hole</p>
+          <p
+            class="text-lg font-semibold {{ 'text-red-400 shake' if critical else 'text-[#00eaff]' }} {{ 'glitch' if glitch else '' }}"
+            data-days="{{ days_remaining }}"
+            id="blackhole-countdown"
+          >
+            {{ '%02d'|format(days_remaining) }}:00:00
+          </p>
+        </div>
+      </header>
+
+      <section class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <div class="xl:col-span-2 glass rounded-3xl p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold text-[#00eaff]">Neural Graph</h2>
+            <div class="flex items-center gap-4 text-xs text-slate-400">
+              <span>HP: {{ user.hp }}</span>
+              <span>MP: {{ user.mana }}</span>
+              <span>Altarians: {{ user.wallet }}</span>
+            </div>
+          </div>
+          <div class="relative w-full h-[520px] rounded-2xl bg-[#0f172a]/50 border border-slate-800 overflow-hidden">
+            <canvas id="neural-canvas" class="w-full h-full"></canvas>
+          </div>
+        </div>
+
+        <div class="glass rounded-3xl p-6 flex flex-col gap-6">
+          <div>
+            <h2 class="text-lg font-semibold text-[#00eaff]">Coalition</h2>
+            <p class="text-xs text-slate-400">Alignment</p>
+          </div>
+          <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-2xl bg-slate-800 flex items-center justify-center">
+              {% if coalition and coalition.icon_url %}
+                <img src="{{ coalition.icon_url }}" alt="Coalition" />
+              {% else %}
+                🛰️
+              {% endif %}
+            </div>
+            <div>
+              <p class="text-sm text-slate-400">{{ coalition.name if coalition else 'Unassigned' }}</p>
+              <p class="text-lg font-semibold">Level {{ user.level }}</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid grid-cols-1 xl:grid-cols-2 gap-6 mt-8">
+        {% include 'components/skill_radar.html' %}
+      </section>
+
+      <section class="glass rounded-3xl p-6 mt-8">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold text-[#00eaff]">Logtime Heatmap</h2>
+          <span class="text-xs text-slate-400">Last 365 Days</span>
+        </div>
+        <div class="heatmap-grid">
+          {% for day, status in heatmap_data.items() %}
+            <div
+              class="heatmap-cell {{ 'bg-gray-800' if status == 'frozen' else 'bg-blue-500' if status == 'active' else 'bg-yellow-400 shadow-glow' }}"
+              title="{{ day }}"
+            ></div>
+          {% endfor %}
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/particles.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/neural_engine.js') }}"></script>
+  <script>
+    const countdown = document.getElementById("blackhole-countdown");
+    if (countdown) {
+      const days = Number(countdown.dataset.days || 0);
+      countdown.textContent = `${String(days).padStart(2, "0")}:00:00`;
+    }
+  </script>
+</body>
+</html>

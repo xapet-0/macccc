@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Control Panel</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#0b0f19] text-slate-100 min-h-screen flex items-center justify-center">
+  <form method="POST" class="bg-[#111827] border border-[#00eaff] p-6 rounded-2xl space-y-4">
+    <h1 class="text-xl font-semibold text-[#00eaff]">Create Project Node</h1>
+    <input name="name" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded" placeholder="Project name" />
+    <input name="slug" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded" placeholder="slug" />
+    <input name="tier" type="number" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded" placeholder="tier" />
+    <button type="submit" class="w-full px-4 py-2 border border-[#00eaff] rounded-lg">Create</button>
+  </form>
+</body>
+</html>
