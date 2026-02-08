@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mariam Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .glass {
+      background: rgba(15, 23, 42, 0.55);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(12px);
+    }
+
+    .quest-node {
+      width: 52px;
+      height: 52px;
+      border-radius: 9999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: absolute;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #0b0f19;
+      cursor: pointer;
+      backdrop-filter: blur(6px);
+    }
+
+    .quest-locked {
+      background: rgba(75, 85, 99, 0.7);
+      color: #e5e7eb;
+    }
+
+    .quest-active {
+      background: #00eaff;
+      animation: pulse 2s infinite;
+      color: #0b0f19;
+    }
+
+    .quest-completed {
+      background: #facc15;
+      color: #1f2937;
+    }
+
+    @keyframes pulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(0, 234, 255, 0.7);
+      }
+      70% {
+        box-shadow: 0 0 0 20px rgba(0, 234, 255, 0);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(0, 234, 255, 0);
+      }
+    }
+
+    .tooltip {
+      position: absolute;
+      top: -32px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(15, 23, 42, 0.9);
+      color: #f8fafc;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 0.7rem;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .quest-node:hover .tooltip {
+      opacity: 1;
+    }
+
+    .heatmap-grid {
+      display: grid;
+      grid-template-columns: repeat(30, 1fr);
+      gap: 6px;
+    }
+
+    .heatmap-cell {
+      width: 16px;
+      height: 16px;
+      border-radius: 5px;
+      border: 1px solid rgba(148, 163, 184, 0.15);
+    }
+
+    .level-frozen { background: rgba(148, 163, 184, 0.2); }
+    .level-active { background: rgba(0, 234, 255, 0.65); }
+    .level-burning {
+      background: rgba(250, 204, 21, 0.95);
+      box-shadow: 0 0 12px rgba(250, 204, 21, 0.5);
+    }
+
+    .pulse-danger {
+      animation: dangerPulse 1.8s infinite;
+    }
+
+    @keyframes dangerPulse {
+      0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
+      70% { box-shadow: 0 0 0 18px rgba(239, 68, 68, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+  </style>
+</head>
+<body class="bg-[#0b0f19] text-slate-100 min-h-screen">
+  <div class="flex min-h-screen">
+    <aside class="w-20 glass border-r border-slate-800 flex flex-col items-center py-8 gap-8 fixed left-0 top-0 bottom-0">
+      <div class="w-12 h-12 rounded-2xl bg-[#00eaff]/20 border border-[#00eaff] flex items-center justify-center">⚡</div>
+      <nav class="flex flex-col gap-6 text-xl text-slate-400">
+        <span class="hover:text-[#00eaff]">🏠</span>
+        <span class="hover:text-[#00eaff]">🗺️</span>
+        <span class="hover:text-[#00eaff]">👤</span>
+        <span class="hover:text-[#00eaff]">🛒</span>
+      </nav>
+    </aside>
+
+    <main class="flex-1 ml-20 px-10 py-8">
+      <header class="glass rounded-3xl px-6 py-4 flex items-center justify-between mb-8">
+        <div>
+          <p class="text-xs uppercase text-slate-400">System</p>
+          <h1 class="text-2xl font-semibold text-[#00eaff]">SYSTEM: ONLINE</h1>
+        </div>
+        {% set danger = player and player.black_hole_days < 10 %}
+        <div class="text-right">
+          <p class="text-xs uppercase text-slate-400">Black Hole</p>
+          <p class="text-lg font-semibold {{ 'text-red-400 pulse-danger' if danger else 'text-[#00eaff]' }}">
+            {{ player.black_hole_days if player else 100 }} DAYS REMAINING
+          </p>
+        </div>
+      </header>
+
+      <section class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <div class="xl:col-span-2 glass rounded-3xl p-6 relative overflow-hidden">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold text-[#00eaff]">Holy Graph</h2>
+            <div class="flex items-center gap-4 text-xs text-slate-400">
+              <span>HP: {{ player.hp if player else 100 }}</span>
+              <span>MP: {{ player.mana if player else 100 }}</span>
+              <span>Gold: <span id="wallet-count">{{ player.wallet if player else 0 }}</span></span>
+            </div>
+          </div>
+          <div class="relative w-full h-[520px] rounded-2xl bg-[#0f172a]/50 border border-slate-800 overflow-hidden">
+            <svg class="absolute inset-0 w-full h-full">
+              {% for edge in edges %}
+                <line
+                  x1="{{ edge[0].graph_x + 25 }}"
+                  y1="{{ edge[0].graph_y + 25 }}"
+                  x2="{{ edge[1].graph_x + 25 }}"
+                  y2="{{ edge[1].graph_y + 25 }}"
+                  stroke="#1e293b"
+                  stroke-width="2"
+                />
+              {% endfor %}
+            </svg>
+
+            {% for quest in quests %}
+              {% set status_class = 'quest-locked' if quest.status == 'LOCKED' else 'quest-active' if quest.status == 'ACTIVE' else 'quest-completed' %}
+              <div
+                class="quest-node {{ status_class }}"
+                style="left: {{ quest.graph_x }}px; top: {{ quest.graph_y }}px;"
+                data-quest-id="{{ quest.id }}"
+                data-quest-title="{{ quest.title }}"
+                data-quest-status="{{ quest.status }}"
+                data-subject-url="{{ url_for('download_subject', quest_id=quest.id) }}"
+              >
+                {% if quest.status == 'LOCKED' %}
+                  🔒
+                  <span class="tooltip">Locked Loot ✨</span>
+                {% elif quest.status == 'ACTIVE' %}
+                  ▶
+                {% else %}
+                  ★
+                {% endif %}
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="glass rounded-3xl p-6 flex flex-col gap-6">
+          <div>
+            <h2 class="text-lg font-semibold text-[#00eaff]">Player Core</h2>
+            <p class="text-xs text-slate-400">Vitals & Focus</p>
+          </div>
+          <div>
+            <p class="text-xs uppercase text-slate-400">Level</p>
+            <p class="text-3xl font-semibold">{{ player.level if player else 1 }}</p>
+          </div>
+          <div>
+            <p class="text-xs uppercase text-slate-400">HP</p>
+            <div class="w-full h-3 bg-slate-800 rounded-full overflow-hidden">
+              <div class="h-full bg-red-500" style="width: {{ player.hp if player else 100 }}%"></div>
+            </div>
+          </div>
+          <div>
+            <p class="text-xs uppercase text-slate-400">MP</p>
+            <div class="w-full h-3 bg-slate-800 rounded-full overflow-hidden">
+              <div class="h-full bg-blue-500" style="width: {{ player.mana if player else 100 }}%"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="glass rounded-3xl p-6 mt-8">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold text-[#00eaff]">Logtime Graph</h2>
+          <span class="text-xs text-slate-400">Last 90 Days</span>
+        </div>
+        <div class="heatmap-grid">
+          {% for day in heatmap_days %}
+            <div class="heatmap-cell {{ day.level }}" title="{{ day.date }}"></div>
+          {% endfor %}
+        </div>
+        <div class="flex items-center gap-3 text-xs text-slate-400 mt-4">
+          <span>0h</span>
+          <span class="heatmap-cell level-frozen"></span>
+          <span class="heatmap-cell level-active"></span>
+          <span class="heatmap-cell level-burning"></span>
+          <span>5h+</span>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="quest-modal" class="fixed inset-0 bg-black/70 hidden items-center justify-center">
+    <div class="bg-[#111827] border border-[#00eaff] rounded-2xl p-6 w-full max-w-lg shadow-2xl">
+      <div class="flex items-center justify-between mb-4">
+        <h2 id="modal-title" class="text-xl text-[#00eaff] font-semibold">Quest</h2>
+        <button id="modal-close" class="text-slate-400 hover:text-white">✕</button>
+      </div>
+      <p class="text-sm text-slate-400 mb-4">Prepare for active mode. Timing is strict.</p>
+      <div class="flex items-center gap-4 mb-4">
+        <button id="start-btn" class="px-4 py-2 bg-[#00eaff]/20 border border-[#00eaff] rounded-lg">Start Timer</button>
+        <button id="stop-btn" class="px-4 py-2 bg-red-500/20 border border-red-400 rounded-lg">Stop</button>
+        <a id="subject-link" href="#" class="text-sm text-[#00eaff] underline">Download Subject</a>
+      </div>
+      <div class="text-lg font-semibold text-white mb-4">Timer: <span id="timer">00:00</span></div>
+      <form id="submission-form" class="space-y-3" enctype="multipart/form-data">
+        <label class="text-sm text-slate-400">Submit Proof</label>
+        <input type="file" name="submission" class="block w-full text-sm text-slate-300" required />
+        <button type="submit" class="px-4 py-2 bg-[#00eaff]/20 border border-[#00eaff] rounded-lg">Submit Proof</button>
+      </form>
+      <p id="submission-result" class="text-sm text-slate-300 mt-3"></p>
+    </div>
+  </div>
+
+  <script>
+    const modal = document.getElementById("quest-modal");
+    const modalTitle = document.getElementById("modal-title");
+    const modalClose = document.getElementById("modal-close");
+    const startBtn = document.getElementById("start-btn");
+    const stopBtn = document.getElementById("stop-btn");
+    const timerEl = document.getElementById("timer");
+    const subjectLink = document.getElementById("subject-link");
+    const submissionForm = document.getElementById("submission-form");
+    const submissionResult = document.getElementById("submission-result");
+    const walletCount = document.getElementById("wallet-count");
+
+    let activeQuestId = null;
+    let timerInterval = null;
+    let heartbeatInterval = null;
+    let secondsElapsed = 0;
+
+    function speak(text) {
+      if (!window.speechSynthesis) return;
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 1;
+      utterance.pitch = 1.1;
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function openModal(quest) {
+      modalTitle.textContent = quest.title;
+      subjectLink.href = quest.subjectUrl;
+      activeQuestId = quest.id;
+      submissionForm.dataset.questId = quest.id;
+      submissionResult.textContent = "";
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+    }
+
+    function closeModal() {
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+    }
+
+    document.querySelectorAll(".quest-node").forEach((node) => {
+      node.addEventListener("click", () => {
+        openModal({
+          id: node.dataset.questId,
+          title: node.dataset.questTitle,
+          status: node.dataset.questStatus,
+          subjectUrl: node.dataset.subjectUrl,
+        });
+      });
+    });
+
+    modalClose.addEventListener("click", closeModal);
+
+    function updateTimer() {
+      secondsElapsed += 1;
+      const minutes = String(Math.floor(secondsElapsed / 60)).padStart(2, "0");
+      const seconds = String(secondsElapsed % 60).padStart(2, "0");
+      timerEl.textContent = `${minutes}:${seconds}`;
+    }
+
+    startBtn.addEventListener("click", async () => {
+      if (!activeQuestId) return;
+      secondsElapsed = 0;
+      timerEl.textContent = "00:00";
+      if (timerInterval) clearInterval(timerInterval);
+      if (heartbeatInterval) clearInterval(heartbeatInterval);
+
+      await fetch("/start_session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ quest_id: activeQuestId }),
+      });
+
+      timerInterval = setInterval(updateTimer, 1000);
+      heartbeatInterval = setInterval(async () => {
+        const response = await fetch("/track_time", { method: "POST" });
+        if (response.ok) {
+          const data = await response.json();
+          walletCount.textContent = data.wallet;
+        }
+      }, 60000);
+
+      speak("System Online. Good luck.");
+    });
+
+    stopBtn.addEventListener("click", async () => {
+      if (timerInterval) clearInterval(timerInterval);
+      if (heartbeatInterval) clearInterval(heartbeatInterval);
+      await fetch("/stop_session", { method: "POST" });
+    });
+
+    submissionForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const questId = submissionForm.dataset.questId;
+      const formData = new FormData(submissionForm);
+      const response = await fetch(`/submit_quest/${questId}`, {
+        method: "POST",
+        body: formData,
+      });
+      const result = await response.json();
+      if (result.result === "success") {
+        submissionResult.textContent = `Quest Cleared. Score: ${result.score}`;
+        speak("Quest Cleared. Loot Unlocked.");
+      } else {
+        submissionResult.textContent = `Disappointing result. Score: ${result.score}`;
+        speak("Disappointing result. HP deducted.");
+      }
+    });
+  </script>
+</body>
+</html>
