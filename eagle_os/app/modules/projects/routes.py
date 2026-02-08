@@ -5,6 +5,7 @@ from flask_login import current_user, login_required
 
 from app.extensions import db
 from app.models.academic import Project, UserProject
+from app.modules.ai_core import AICodeReviewer, EagleAgent
 from app.modules.ai_core import EagleAgent
 from app.modules.projects import projects_bp
 
@@ -55,9 +56,18 @@ def submit(slug: str):
     if not submission:
         abort(400, description="System Alert: Submission file missing.")
 
+    language = request.form.get("language", "text")
+    content = submission.read().decode("utf-8", errors="ignore")
+    reviewer = AICodeReviewer()
+    review_result = reviewer.review_code(content, language)
+
     record.status = "waiting_correction"
     db.session.commit()
 
     EagleAgent().analyze_patterns(current_user.id)
+    flash(
+        f"Submission Received. Grade: {review_result.get('grade')} - {review_result.get('feedback')}",
+        "info",
+    )
     flash("Submission Received", "info")
     return redirect(url_for("projects.project_detail", slug=slug))

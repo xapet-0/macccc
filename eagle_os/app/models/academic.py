@@ -36,6 +36,7 @@ class Project(db.Model):
     tier = db.Column(db.Integer, nullable=False, default=0)
     xp_reward = db.Column(db.Integer, nullable=False, default=0)
     estimated_hours = db.Column(db.Integer, nullable=False, default=0)
+    skills_points = db.Column(db.JSON, nullable=False, default=dict)
 
     x_coord = db.Column(db.Integer, nullable=False, default=0)
     y_coord = db.Column(db.Integer, nullable=False, default=0)

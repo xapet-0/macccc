@@ -30,6 +30,7 @@ class User(UserMixin, db.Model):
     level = db.Column(db.Float, nullable=False, default=1.0)
     xp = db.Column(db.Integer, nullable=False, default=0)
     wallet = db.Column(db.Integer, nullable=False, default=0)
+    currency_balance = db.Column(db.Integer, nullable=False, default=0)
     correction_points = db.Column(db.Integer, nullable=False, default=5)
 
     hp = db.Column(db.Integer, nullable=False, default=100)
@@ -37,12 +38,18 @@ class User(UserMixin, db.Model):
     black_hole_date = db.Column(db.DateTime)
     is_frozen = db.Column(db.Boolean, nullable=False, default=False)
     last_sudden_quest = db.Column(db.DateTime)
+    custom_title = db.Column(db.String(120))
 
     coalition_id = db.Column(db.Integer, db.ForeignKey("coalitions.id"))
     coalition = db.relationship("Coalition", backref="members")
 
     projects = db.relationship("UserProject", back_populates="user", lazy="dynamic")
     logs = db.relationship("DailyLog", back_populates="user", lazy="dynamic")
+    achievements = db.relationship(
+        "Achievement",
+        secondary="user_achievements",
+        back_populates="users",
+    )
 
     def calculate_level(self) -> float:
         return round(max(1.0, math.sqrt(self.xp) * 0.1), 2)

@@ -9,6 +9,7 @@ from app.modules.correction import correction_bp
 from app.modules.dashboard import api_bp, dashboard_bp
 from app.modules.projects import projects_bp
 from app.modules.battle import battle_bp
+from app.modules.shop import shop_bp
 
 
 def create_app(config_name: str = "development") -> Flask:
@@ -27,6 +28,7 @@ def create_app(config_name: str = "development") -> Flask:
     app.register_blueprint(correction_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(battle_bp)
+    app.register_blueprint(shop_bp)
 
     login_manager.login_view = "auth.login"
 
