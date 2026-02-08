@@ -8,6 +8,7 @@ from flask_login import login_required, current_user
 
 from app.models.academic import Project, UserProject
 from app.models.gamification import DailyLog
+from app.modules.ai_core import EagleAgent
 from app.modules.dashboard import api_bp
 
 
@@ -59,3 +60,7 @@ def neural_data():
             links.append({"source": parent.id, "target": project.id, "strength": 1})
 
     return jsonify({"nodes": nodes, "links": links})
+    agent = EagleAgent()
+    recommendation = agent.recommend_next_step(current_user.id)
+
+    return jsonify({"nodes": nodes, "links": links, "agent_recommendation": recommendation})

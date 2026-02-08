@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 from flask import render_template
-from flask_login import current_user, login_required
+from flask_login import login_required, current_user
 
-from app.models.academic import Project, UserProject
 from app.models.user import Coalition
+from app.utils import check_black_hole, calculate_heatmap
+from app.models.academic import Project, UserProject
 from app.modules.dashboard import dashboard_bp
-from app.utils import calculate_heatmap, check_black_hole
 
 
 @dashboard_bp.route("/")
@@ -51,3 +51,4 @@ def build_skill_radar(user_id: int) -> dict[str, int]:
             if label in totals:
                 totals[label] += int(value)
     return totals
+    )

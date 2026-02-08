@@ -1,23 +1,25 @@
 from __future__ import annotations
 
 import os
-import sys
 from datetime import datetime, timedelta
-from pathlib import Path
 
-BASE_DIR = Path(__file__).resolve().parents[1]
-if str(BASE_DIR) not in sys.path:
-    sys.path.insert(0, str(BASE_DIR))
+from flask import Flask
 
-from app import create_app  # noqa: E402
-from app.extensions import db  # noqa: E402
-from app.models.academic import Project, Skill  # noqa: E402
-from app.models.user import Coalition, User  # noqa: E402
+from app.extensions import db
+from app.models.academic import Project, Skill
+from app.models.user import Coalition, User
 
 
-def seed() -> None:
-    config_name = os.environ.get("FLASK_ENV", "development")
-    app = create_app(config_name)
+def create_seed_app() -> Flask:
+    app = Flask(__name__)
+    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DB_URI", "sqlite:///eagle_os.db")
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    db.init_app(app)
+    return app
+
+
+def seed():
+    app = create_seed_app()
     with app.app_context():
         db.create_all()
 
@@ -44,7 +46,6 @@ def seed() -> None:
             tier=0,
             xp_reward=200,
             estimated_hours=40,
-            skills_points={"algo": 10, "sysadmin": 4},
             x_coord=120,
             y_coord=200,
         )
@@ -55,7 +56,6 @@ def seed() -> None:
             tier=1,
             xp_reward=300,
             estimated_hours=50,
-            skills_points={"algo": 6, "web": 2},
             x_coord=280,
             y_coord=220,
         )
