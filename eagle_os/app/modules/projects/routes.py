@@ -56,6 +56,10 @@ def submit(slug: str):
     if not submission:
         abort(400, description="System Alert: Submission file missing.")
 
+    record.status = "waiting_correction"
+    db.session.commit()
+
+    flash("Submission Received. Awaiting system evaluation.", "info")
     language = request.form.get("language", "text")
     content = submission.read().decode("utf-8", errors="ignore")
     reviewer = AICodeReviewer()

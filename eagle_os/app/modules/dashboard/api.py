@@ -59,6 +59,7 @@ def neural_data():
         for parent in project.parent_projects:
             links.append({"source": parent.id, "target": project.id, "strength": 1})
 
+    return jsonify({"nodes": nodes, "links": links})
     agent = EagleAgent()
     recommendation = agent.recommend_next_step(current_user.id)
 
