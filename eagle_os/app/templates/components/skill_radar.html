@@ -1,0 +1,46 @@
+<div class="glass rounded-3xl p-6">
+  <div class="flex items-center justify-between mb-4">
+    <h2 class="text-lg font-semibold text-[#00eaff]">Skill Radar</h2>
+    <span class="text-xs text-slate-400">Neural Profile</span>
+  </div>
+  <canvas id="skill-radar" class="w-full h-[300px]"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const radarCtx = document.getElementById("skill-radar");
+  if (radarCtx) {
+    new Chart(radarCtx, {
+      type: "radar",
+      data: {
+        labels: ["Algorithms", "Graphics", "SysAdmin", "Web"],
+        datasets: [
+          {
+            label: "Skill Matrix",
+            data: [
+              {{ skill_radar['Algorithms'] }},
+              {{ skill_radar['Graphics'] }},
+              {{ skill_radar['SysAdmin'] }},
+              {{ skill_radar['Web'] }},
+            ],
+            borderColor: "rgba(0, 234, 255, 0.9)",
+            backgroundColor: "rgba(0, 234, 255, 0.15)",
+            pointBackgroundColor: "rgba(250, 204, 21, 0.9)",
+            pointBorderColor: "rgba(0, 234, 255, 0.9)",
+          },
+        ],
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: {
+          r: {
+            angleLines: { color: "rgba(148, 163, 184, 0.2)" },
+            grid: { color: "rgba(148, 163, 184, 0.15)" },
+            pointLabels: { color: "rgba(248, 250, 252, 0.8)" },
+            ticks: { display: false },
+          },
+        },
+      },
+    });
+  }
+</script>
