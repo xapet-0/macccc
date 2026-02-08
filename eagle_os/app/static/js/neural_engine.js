@@ -85,6 +85,14 @@ function drawNode(node) {
 
   if (node.status === "burning" && particleSystem) {
     particleSystem.emit(node.x, node.y, 3);
+  if (node.status === "burning") {
+    for (let i = 0; i < 8; i += 1) {
+      const angle = Math.random() * 2 * Math.PI;
+      const dx = Math.cos(angle) * (radius + 6);
+      const dy = Math.sin(angle) * (radius + 6);
+      context.fillStyle = "rgba(250, 204, 21, 0.6)";
+      context.fillRect(node.x + dx, node.y + dy, 2, 2);
+    }
   }
 }
 
@@ -113,6 +121,7 @@ function render() {
     particleSystem.update();
     particleSystem.draw(context);
   }
+  nodes.forEach(drawNode);
   context.restore();
 }
 
