@@ -1,6 +1,7 @@
 import os
 import random
 
+
 from datetime import date, datetime, timedelta
 
 
@@ -47,6 +48,7 @@ def seed_dummy_data() -> None:
 
         player = Player(
             name="Mariam",
+
             level=1,
             xp=0,
             hp=100,
@@ -55,6 +57,7 @@ def seed_dummy_data() -> None:
             wallet=0,
             black_hole_days=100,
             daily_target_hours=17.0,
+
         )
 
         quest_chain = [
@@ -67,6 +70,8 @@ def seed_dummy_data() -> None:
                 eval_script="",
                 graph_x=80,
                 graph_y=140,
+                dependencies="",
+
             ),
             Quest(
                 title="Stabilize the Core",
@@ -77,6 +82,8 @@ def seed_dummy_data() -> None:
                 eval_script="",
                 graph_x=280,
                 graph_y=80,
+                dependencies="1",
+
             ),
             Quest(
                 title="Architect's Trial",
@@ -87,6 +94,8 @@ def seed_dummy_data() -> None:
                 eval_script="",
                 graph_x=480,
                 graph_y=180,
+                dependencies="2",
+
             ),
         ]
 
@@ -167,6 +176,11 @@ def architect():
 @app.route("/dashboard")
 def dashboard():
     player = Player.query.first()
+    if not player:
+        return redirect(url_for("architect"))
+    if check_survival(player):
+        return redirect(url_for("game_over"))
+
     quests = Quest.query.order_by(Quest.graph_x.asc()).all()
 
     if player:
@@ -176,6 +190,7 @@ def dashboard():
         edges.append((quests[idx], quests[idx + 1]))
     heatmap_data = get_heatmap_data()
     heatmap_days = build_heatmap_days(90, heatmap_data)
+
     return render_template(
         "dashboard.html",
         player=player,
@@ -183,6 +198,7 @@ def dashboard():
         edges=edges,
         heatmap_days=heatmap_days,
     )
+
 
 
 
@@ -223,6 +239,7 @@ def track_time():
     player.wallet += 1
 
     upsert_daily_log(minutes=1)
+
 
     db.session.commit()
 
@@ -282,6 +299,7 @@ def build_heatmap_days(days: int, heatmap_data: dict[str, float]) -> list[dict[s
             {
                 "date": key,
                 "level": heatmap_level(hours),
+
             }
         )
     return output
@@ -315,6 +333,7 @@ def status_for_hours(hours: float) -> str:
     if hours >= 10:
         return "BURNING"
     if hours >= 4:
+
         return "ACTIVE"
     return "FROZEN"
 

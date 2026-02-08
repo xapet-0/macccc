@@ -6,6 +6,13 @@
   <title>Mariam Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
+    .glass {
+      background: rgba(15, 23, 42, 0.55);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(12px);
+    }
+
     .quest-node {
 
       width: 52px;
@@ -98,6 +105,7 @@
       border: 1px solid rgba(148, 163, 184, 0.2);
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
       backdrop-filter: blur(12px);
+
     }
 
     .pulse-danger {
@@ -158,6 +166,7 @@
           <div class="flex items-center justify-between mb-4">
             <h2 class="text-lg font-semibold text-[#00eaff]">Quest Network</h2>
             <span class="text-xs text-slate-400">Nodes synchronize with active mode</span>
+
           </div>
           <div class="relative w-full h-[520px] rounded-2xl bg-[#0f172a]/50 border border-slate-800 overflow-hidden">
             <svg class="absolute inset-0 w-full h-full">
@@ -215,6 +224,7 @@
           <div class="text-sm text-slate-300 space-y-2">
             <p>Target Hours: <span class="text-[#00eaff]">{{ player.daily_target_hours if player else 17 }}</span></p>
             <p>Survival Rule: <span class="text-slate-400">&lt;4h loses a day, &gt;10h gains a day.</span></p>
+
           </div>
         </div>
       </section>
@@ -223,6 +233,7 @@
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-lg font-semibold text-[#00eaff]">Activity Heatmap</h2>
           <span class="text-xs text-slate-400">Last 3 Months</span>
+
         </div>
         <div class="heatmap-grid">
           {% for day in heatmap_days %}
@@ -237,6 +248,7 @@
           <span class="heatmap-cell level-3"></span>
           <span class="heatmap-cell level-4"></span>
           <span>10h+</span>
+
         </div>
       </section>
     </main>
@@ -251,15 +263,17 @@
       </div>
       <p class="text-sm text-slate-400 mb-4">Prepare for active mode. Timing is strict.</p>
       <div class="flex items-center gap-4 mb-4">
-        <button id="start-btn" class="px-4 py-2 bg-[#00eaff]/20 border border-[#00eaff] rounded-lg">Start</button>
+        <button id="start-btn" class="px-4 py-2 bg-[#00eaff]/20 border border-[#00eaff] rounded-lg">Start Timer</button>
+
         <button id="stop-btn" class="px-4 py-2 bg-red-500/20 border border-red-400 rounded-lg">Stop</button>
         <a id="subject-link" href="#" class="text-sm text-[#00eaff] underline">Download Subject</a>
       </div>
       <div class="text-lg font-semibold text-white mb-4">Timer: <span id="timer">00:00</span></div>
       <form id="submission-form" class="space-y-3" enctype="multipart/form-data">
-        <label class="text-sm text-slate-400">Submit Quest Proof</label>
+        <label class="text-sm text-slate-400">Submit Proof</label>
         <input type="file" name="submission" class="block w-full text-sm text-slate-300" required />
-        <button type="submit" class="px-4 py-2 bg-[#00eaff]/20 border border-[#00eaff] rounded-lg">Submit</button>
+        <button type="submit" class="px-4 py-2 bg-[#00eaff]/20 border border-[#00eaff] rounded-lg">Submit Proof</button>
+
       </form>
       <p id="submission-result" class="text-sm text-slate-300 mt-3"></p>
     </div>

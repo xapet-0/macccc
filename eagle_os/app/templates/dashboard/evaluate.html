@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Evaluate Project</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#0b0f19] text-slate-100 min-h-screen flex items-center justify-center">
+  <form method="POST" class="bg-[#111827] border border-[#00eaff] p-6 rounded-2xl space-y-4">
+    <h1 class="text-xl font-semibold text-[#00eaff]">Evaluate {{ project.name }}</h1>
+    <p class="text-sm text-slate-400">User: {{ user.username }}</p>
+    <input type="number" name="grade" min="0" max="125" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded" />
+    <textarea name="feedback" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded" placeholder="Feedback"></textarea>
+    <button type="submit" class="w-full px-4 py-2 border border-[#00eaff] rounded-lg">Submit</button>
+  </form>
+</body>
+</html>
