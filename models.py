@@ -16,6 +16,7 @@ class Player(db.Model):
     mana = db.Column(db.Integer, nullable=False, default=100)
     rank = db.Column(db.String(10), nullable=False, default="E")
     wallet = db.Column(db.Integer, nullable=False, default=0)
+
     black_hole_days = db.Column(db.Integer, nullable=False, default=100)
     daily_target_hours = db.Column(db.Float, nullable=False, default=17.0)
 
@@ -53,6 +54,7 @@ class Log(db.Model):
     end_time = db.Column(db.DateTime)
     duration_minutes = db.Column(db.Integer, nullable=False, default=0)
     activity_type = db.Column(db.String(50), nullable=False)
+codex/setup-initial-flask-app-and-database-schema-hxpd6h
 
 
 class DailyLog(db.Model):

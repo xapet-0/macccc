@@ -1,6 +1,8 @@
 import os
 import random
+
 from datetime import date, datetime, timedelta
+
 
 from flask import (
     Flask,
@@ -13,6 +15,7 @@ from flask import (
     url_for,
 )
 from werkzeug.utils import secure_filename
+
 
 from models import DailyLog, Log, Loot, Player, Quest, db
 
@@ -41,6 +44,7 @@ def seed_dummy_data() -> None:
         if Player.query.first():
             return
 
+
         player = Player(
             name="Mariam",
             level=1,
@@ -52,6 +56,7 @@ def seed_dummy_data() -> None:
             black_hole_days=100,
             daily_target_hours=17.0,
         )
+
         quest_chain = [
             Quest(
                 title="Awaken the System",
@@ -163,6 +168,7 @@ def architect():
 def dashboard():
     player = Player.query.first()
     quests = Quest.query.order_by(Quest.graph_x.asc()).all()
+
     if player:
         calculate_black_hole(player)
     edges = []
@@ -177,6 +183,7 @@ def dashboard():
         edges=edges,
         heatmap_days=heatmap_days,
     )
+
 
 
 @app.route("/download_subject/<int:quest_id>")
@@ -214,7 +221,9 @@ def track_time():
         return jsonify({"error": "No player"}), 404
 
     player.wallet += 1
+
     upsert_daily_log(minutes=1)
+
     db.session.commit()
 
     session["last_heartbeat"] = datetime.utcnow().isoformat()
@@ -238,6 +247,7 @@ def stop_session():
 
 def evaluate_submission() -> int:
     return random.randint(50, 100)
+
 
 
 def calculate_black_hole(player: Player) -> None:
@@ -307,6 +317,7 @@ def status_for_hours(hours: float) -> str:
     if hours >= 4:
         return "ACTIVE"
     return "FROZEN"
+
 
 
 @app.route("/submit_quest/<int:quest_id>", methods=["POST"])
