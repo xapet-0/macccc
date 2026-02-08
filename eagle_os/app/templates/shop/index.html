@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Black Market</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#0b0f19] text-slate-100 min-h-screen">
+  <div class="max-w-5xl mx-auto px-8 py-10">
+    <h1 class="text-3xl font-semibold text-[#00eaff] mb-6">Black Market</h1>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {% for item in items %}
+      <div class="bg-[#111827] border border-[#00eaff]/40 rounded-2xl p-6 flex flex-col gap-4">
+        <div class="flex items-center gap-3">
+          {% if item.icon_url %}
+            <img src="{{ item.icon_url }}" alt="{{ item.name }}" class="w-10 h-10" />
+          {% else %}
+            <div class="w-10 h-10 rounded-xl bg-[#00eaff]/20 flex items-center justify-center">🛒</div>
+          {% endif %}
+          <div>
+            <h2 class="text-lg font-semibold">{{ item.name }}</h2>
+            <p class="text-xs text-slate-400">{{ item.effect_type }}</p>
+          </div>
+        </div>
+        <p class="text-sm text-slate-300">{{ item.description }}</p>
+        <div class="flex items-center justify-between">
+          <span class="text-[#00eaff]">{{ item.cost }} Altarians</span>
+          <form method="POST" action="{{ url_for('shop.buy', item_id=item.id) }}">
+            <button class="px-3 py-1 border border-[#00eaff] rounded-lg">Buy</button>
+          </form>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</body>
+</html>

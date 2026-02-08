@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sudden Quest</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#0b0f19] text-slate-100 min-h-screen flex items-center justify-center">
+  <form method="POST" class="bg-[#111827] border border-[#00eaff] p-6 rounded-2xl space-y-4">
+    <h1 class="text-xl font-semibold text-[#00eaff]">Sudden Quest</h1>
+    <p class="text-sm text-slate-400">Accept the physical penalty challenge to continue.</p>
+    <label class="flex items-center gap-2 text-sm text-slate-300">
+      <input type="checkbox" name="accept" value="yes" required />
+      I accept the consequences if I fail.
+    </label>
+    <button type="submit" class="w-full px-4 py-2 border border-[#00eaff] rounded-lg">Engage</button>
+  </form>
+</body>
+</html>
