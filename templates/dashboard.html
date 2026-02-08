@@ -14,6 +14,8 @@
     }
 
     .quest-node {
+      width: 52px;
+      height: 52px;
 
       width: 52px;
       height: 52px;
@@ -81,6 +83,24 @@
       opacity: 1;
     }
 
+    .heatmap-grid {
+      display: grid;
+      grid-template-columns: repeat(30, 1fr);
+      gap: 6px;
+    }
+
+    .heatmap-cell {
+      width: 16px;
+      height: 16px;
+      border-radius: 5px;
+      border: 1px solid rgba(148, 163, 184, 0.15);
+    }
+
+    .level-frozen { background: rgba(148, 163, 184, 0.2); }
+    .level-active { background: rgba(0, 234, 255, 0.65); }
+    .level-burning {
+      background: rgba(250, 204, 21, 0.95);
+      box-shadow: 0 0 12px rgba(250, 204, 21, 0.5);
     .heatmap-cell {
       width: 16px;
       height: 16px;
@@ -121,6 +141,40 @@
 </head>
 <body class="bg-[#0b0f19] text-slate-100 min-h-screen">
   <div class="flex min-h-screen">
+    <aside class="w-20 glass border-r border-slate-800 flex flex-col items-center py-8 gap-8 fixed left-0 top-0 bottom-0">
+      <div class="w-12 h-12 rounded-2xl bg-[#00eaff]/20 border border-[#00eaff] flex items-center justify-center">⚡</div>
+      <nav class="flex flex-col gap-6 text-xl text-slate-400">
+        <span class="hover:text-[#00eaff]">🏠</span>
+        <span class="hover:text-[#00eaff]">🗺️</span>
+        <span class="hover:text-[#00eaff]">👤</span>
+        <span class="hover:text-[#00eaff]">🛒</span>
+      </nav>
+    </aside>
+
+    <main class="flex-1 ml-20 px-10 py-8">
+      <header class="glass rounded-3xl px-6 py-4 flex items-center justify-between mb-8">
+        <div>
+          <p class="text-xs uppercase text-slate-400">System</p>
+          <h1 class="text-2xl font-semibold text-[#00eaff]">SYSTEM: ONLINE</h1>
+        </div>
+        {% set danger = player and player.black_hole_days < 10 %}
+        <div class="text-right">
+          <p class="text-xs uppercase text-slate-400">Black Hole</p>
+          <p class="text-lg font-semibold {{ 'text-red-400 pulse-danger' if danger else 'text-[#00eaff]' }}">
+            {{ player.black_hole_days if player else 100 }} DAYS REMAINING
+          </p>
+        </div>
+      </header>
+
+      <section class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <div class="xl:col-span-2 glass rounded-3xl p-6 relative overflow-hidden">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold text-[#00eaff]">Holy Graph</h2>
+            <div class="flex items-center gap-4 text-xs text-slate-400">
+              <span>HP: {{ player.hp if player else 100 }}</span>
+              <span>MP: {{ player.mana if player else 100 }}</span>
+              <span>Gold: <span id="wallet-count">{{ player.wallet if player else 0 }}</span></span>
+            </div>
     <aside class="w-24 bg-[#0b0f19] border-r border-slate-800 flex flex-col items-center py-8 gap-8">
       <div class="w-12 h-12 rounded-2xl bg-[#00eaff]/20 border border-[#00eaff] flex items-center justify-center">⚡</div>
       <nav class="flex flex-col gap-6 text-xl text-slate-400">
@@ -207,6 +261,24 @@
 
         <div class="glass rounded-3xl p-6 flex flex-col gap-6">
           <div>
+            <h2 class="text-lg font-semibold text-[#00eaff]">Player Core</h2>
+            <p class="text-xs text-slate-400">Vitals & Focus</p>
+          </div>
+          <div>
+            <p class="text-xs uppercase text-slate-400">Level</p>
+            <p class="text-3xl font-semibold">{{ player.level if player else 1 }}</p>
+          </div>
+          <div>
+            <p class="text-xs uppercase text-slate-400">HP</p>
+            <div class="w-full h-3 bg-slate-800 rounded-full overflow-hidden">
+              <div class="h-full bg-red-500" style="width: {{ player.hp if player else 100 }}%"></div>
+            </div>
+          </div>
+          <div>
+            <p class="text-xs uppercase text-slate-400">MP</p>
+            <div class="w-full h-3 bg-slate-800 rounded-full overflow-hidden">
+              <div class="h-full bg-blue-500" style="width: {{ player.mana if player else 100 }}%"></div>
+            </div>
             <h2 class="text-lg font-semibold text-[#00eaff]">Black Hole Status</h2>
             <p class="text-xs text-slate-400">Survival Countdown</p>
           </div>
@@ -231,6 +303,8 @@
 
       <section class="glass rounded-3xl p-6 mt-8">
         <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold text-[#00eaff]">Logtime Graph</h2>
+          <span class="text-xs text-slate-400">Last 90 Days</span>
           <h2 class="text-lg font-semibold text-[#00eaff]">Activity Heatmap</h2>
           <span class="text-xs text-slate-400">Last 3 Months</span>
 
@@ -242,6 +316,10 @@
         </div>
         <div class="flex items-center gap-3 text-xs text-slate-400 mt-4">
           <span>0h</span>
+          <span class="heatmap-cell level-frozen"></span>
+          <span class="heatmap-cell level-active"></span>
+          <span class="heatmap-cell level-burning"></span>
+          <span>5h+</span>
           <span class="heatmap-cell level-0"></span>
           <span class="heatmap-cell level-1"></span>
           <span class="heatmap-cell level-2"></span>

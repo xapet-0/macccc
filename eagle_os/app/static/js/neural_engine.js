@@ -18,6 +18,7 @@ d3.select(canvas).call(zoom);
 let nodes = [];
 let links = [];
 let agentRecommendation = null;
+const particleSystem = window.ParticleSystem ? new window.ParticleSystem() : null;
 
 function fetchData() {
   return fetch("/api/neural-data")
@@ -56,6 +57,8 @@ function initSimulation() {
 
 function drawNode(node) {
   const radius = 12 + node.tier;
+  context.shadowColor = "rgba(0, 234, 255, 0.6)";
+  context.shadowBlur = node.status === "burning" ? 20 : 10;
   context.beginPath();
   context.arc(node.x, node.y, radius, 0, 2 * Math.PI);
 
@@ -72,6 +75,7 @@ function drawNode(node) {
   }
 
   context.fill();
+  context.shadowBlur = 0;
 
   if (node.status === "recommended") {
     context.strokeStyle = "rgba(0, 234, 255, 0.8)";
@@ -79,6 +83,8 @@ function drawNode(node) {
     context.strokeRect(node.x - radius - 6, node.y - radius - 6, radius * 2 + 12, radius * 2 + 12);
   }
 
+  if (node.status === "burning" && particleSystem) {
+    particleSystem.emit(node.x, node.y, 3);
   if (node.status === "burning") {
     for (let i = 0; i < 8; i += 1) {
       const angle = Math.random() * 2 * Math.PI;
@@ -101,6 +107,20 @@ function render() {
     context.lineTo(link.target.x, link.target.y);
     context.stroke();
   });
+  links.forEach((link) => {
+    const t = (Date.now() / 1000) % 1;
+    const x = link.source.x + (link.target.x - link.source.x) * t;
+    const y = link.source.y + (link.target.y - link.source.y) * t;
+    context.fillStyle = "rgba(248, 250, 252, 0.8)";
+    context.beginPath();
+    context.arc(x, y, 2, 0, 2 * Math.PI);
+    context.fill();
+  });
+  nodes.forEach(drawNode);
+  if (particleSystem) {
+    particleSystem.update();
+    particleSystem.draw(context);
+  }
   nodes.forEach(drawNode);
   context.restore();
 }

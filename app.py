@@ -1,7 +1,5 @@
 import os
 import random
-
-
 from datetime import date, datetime, timedelta
 
 
@@ -45,21 +43,16 @@ def seed_dummy_data() -> None:
         if Player.query.first():
             return
 
-
         player = Player(
-            name="Mariam",
 
             level=1,
             xp=0,
             hp=100,
             mana=100,
-            rank="E",
-            wallet=0,
             black_hole_days=100,
-            daily_target_hours=17.0,
-
+            last_active_date=date.today(),
+            wallet=0,
         )
-
         quest_chain = [
             Quest(
                 title="Awaken the System",
@@ -71,7 +64,6 @@ def seed_dummy_data() -> None:
                 graph_x=80,
                 graph_y=140,
                 dependencies="",
-
             ),
             Quest(
                 title="Stabilize the Core",
@@ -180,6 +172,11 @@ def dashboard():
         return redirect(url_for("architect"))
     if check_survival(player):
         return redirect(url_for("game_over"))
+    quests = Quest.query.order_by(Quest.graph_x.asc()).all()
+    edges = []
+    for idx in range(len(quests) - 1):
+        edges.append((quests[idx], quests[idx + 1]))
+    heatmap_days = get_heatmap_days(90)
 
     quests = Quest.query.order_by(Quest.graph_x.asc()).all()
 
@@ -200,6 +197,9 @@ def dashboard():
     )
 
 
+@app.route("/game_over")
+def game_over():
+    return render_template("game_over.html")
 
 
 @app.route("/download_subject/<int:quest_id>")
@@ -237,6 +237,7 @@ def track_time():
         return jsonify({"error": "No player"}), 404
 
     player.wallet += 1
+    upsert_daily_log(seconds=60)
 
     upsert_daily_log(minutes=1)
 
@@ -266,6 +267,43 @@ def evaluate_submission() -> int:
     return random.randint(50, 100)
 
 
+def check_survival(player: Player) -> bool:
+    today = date.today()
+    if not player.last_active_date:
+        player.last_active_date = today
+        db.session.commit()
+        return False
+    last_active = player.last_active_date
+    delta_days = (today - last_active).days
+    if delta_days <= 0:
+        return player.black_hole_days <= 0
+
+    for offset in range(1, delta_days + 1):
+        missing_day = last_active + timedelta(days=offset)
+        if not DailyLog.query.get(missing_day):
+            db.session.add(DailyLog(date=missing_day, total_seconds=0, status="FROZEN"))
+    player.black_hole_days = max(0, player.black_hole_days - delta_days)
+    player.last_active_date = today
+    db.session.commit()
+    return player.black_hole_days <= 0
+
+
+def get_heatmap_days(days: int) -> list[dict[str, str]]:
+    today = date.today()
+    start_date = today - timedelta(days=days - 1)
+    logs = DailyLog.query.filter(DailyLog.date >= start_date).all()
+    log_map = {log.date: log for log in logs}
+    output = []
+    for offset in range(days):
+        current_day = start_date + timedelta(days=offset)
+        log = log_map.get(current_day)
+        total_seconds = log.total_seconds if log else 0
+        status = log.status if log else "FROZEN"
+        output.append(
+            {
+                "date": current_day.isoformat(),
+                "total_seconds": total_seconds,
+                "level": heatmap_level(status),
 
 def calculate_black_hole(player: Player) -> None:
     today = date.today()
@@ -305,6 +343,29 @@ def build_heatmap_days(days: int, heatmap_data: dict[str, float]) -> list[dict[s
     return output
 
 
+def heatmap_level(status: str) -> str:
+    if status == "BURNING":
+        return "level-burning"
+    if status == "ACTIVE":
+        return "level-active"
+    return "level-frozen"
+
+
+def upsert_daily_log(seconds: int) -> None:
+    today = date.today()
+    daily_log = DailyLog.query.get(today)
+    if daily_log:
+        daily_log.total_seconds += seconds
+    else:
+        daily_log = DailyLog(date=today, total_seconds=seconds)
+        db.session.add(daily_log)
+    daily_log.status = status_for_seconds(daily_log.total_seconds)
+
+
+def status_for_seconds(seconds: int) -> str:
+    if seconds > 14400:
+        return "BURNING"
+    if seconds > 0:
 def heatmap_level(hours: float) -> str:
     if hours >= 10:
         return "level-4"

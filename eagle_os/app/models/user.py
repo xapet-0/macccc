@@ -36,6 +36,7 @@ class User(UserMixin, db.Model):
     mana = db.Column(db.Integer, nullable=False, default=100)
     black_hole_date = db.Column(db.DateTime)
     is_frozen = db.Column(db.Boolean, nullable=False, default=False)
+    last_sudden_quest = db.Column(db.DateTime)
 
     coalition_id = db.Column(db.Integer, db.ForeignKey("coalitions.id"))
     coalition = db.relationship("Coalition", backref="members")

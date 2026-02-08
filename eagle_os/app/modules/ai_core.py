@@ -36,6 +36,12 @@ class EagleAgent:
         )
         weakness = "Resilience" if failures == 0 else "Consistency"
 
+        momentum = self._momentum_score(user_id)
+
+        return {
+            "peak_performance_day": peak_label,
+            "weakness": weakness,
+            "momentum": f\"{momentum:.2f}\",
         return {
             "peak_performance_day": peak_label,
             "weakness": weakness,
@@ -62,6 +68,8 @@ class EagleAgent:
             .count()
         )
 
+        momentum = self._momentum_score(user_id)
+        if failing_count >= 2 or momentum < 2.0:
         if failing_count >= 2:
             system_notify(user, "System Assist: Try a lower tier project to stabilize progress.", "warning")
             candidate = min(available_projects, key=lambda project: project.tier, default=None)
@@ -76,3 +84,24 @@ class EagleAgent:
             "project": candidate.name,
             "slug": candidate.slug,
         }
+
+    def _momentum_score(self, user_id: int) -> float:
+        streak_days = (
+            DailyLog.query.filter(DailyLog.user_id == user_id, DailyLog.status != "frozen")
+            .count()
+        )
+        total_hours = (
+            DailyLog.query.with_entities(DailyLog.active_seconds)
+            .filter(DailyLog.user_id == user_id)
+            .all()
+        )
+        total_seconds = sum(item[0] for item in total_hours)
+        failures = (
+            UserProject.query.filter(
+                UserProject.user_id == user_id,
+                UserProject.status == "failed",
+            )
+            .count()
+        )
+        fail_rate = failures / max(1, failures + 5)
+        return (streak_days ** 1.2) * (1 + total_seconds / 3600) * (1 - fail_rate)
