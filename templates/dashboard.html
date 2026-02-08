@@ -16,11 +16,16 @@
     .quest-node {
       width: 52px;
       height: 52px;
+
+      width: 52px;
+      height: 52px;
+
       border-radius: 9999px;
       display: flex;
       align-items: center;
       justify-content: center;
       position: absolute;
+
       font-size: 0.8rem;
       font-weight: 600;
       color: #0b0f19;
@@ -30,6 +35,7 @@
 
     .quest-locked {
       background: rgba(75, 85, 99, 0.7);
+
       color: #e5e7eb;
     }
 
@@ -50,6 +56,7 @@
       }
       70% {
         box-shadow: 0 0 0 20px rgba(0, 234, 255, 0);
+
       }
       100% {
         box-shadow: 0 0 0 0 rgba(0, 234, 255, 0);
@@ -94,6 +101,31 @@
     .level-burning {
       background: rgba(250, 204, 21, 0.95);
       box-shadow: 0 0 12px rgba(250, 204, 21, 0.5);
+    .heatmap-cell {
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+      border: 1px solid rgba(148, 163, 184, 0.15);
+    }
+
+    .heatmap-grid {
+      display: grid;
+      grid-template-columns: repeat(15, 16px);
+      gap: 8px;
+    }
+
+    .level-0 { background: rgba(148, 163, 184, 0.2); }
+    .level-1 { background: rgba(59, 130, 246, 0.3); }
+    .level-2 { background: rgba(37, 99, 235, 0.6); }
+    .level-3 { background: rgba(0, 234, 255, 0.7); }
+    .level-4 { background: rgba(250, 204, 21, 0.9); }
+
+    .glass {
+      background: rgba(15, 23, 42, 0.55);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(12px);
+
     }
 
     .pulse-danger {
@@ -143,6 +175,52 @@
               <span>MP: {{ player.mana if player else 100 }}</span>
               <span>Gold: <span id="wallet-count">{{ player.wallet if player else 0 }}</span></span>
             </div>
+    <aside class="w-24 bg-[#0b0f19] border-r border-slate-800 flex flex-col items-center py-8 gap-8">
+      <div class="w-12 h-12 rounded-2xl bg-[#00eaff]/20 border border-[#00eaff] flex items-center justify-center">⚡</div>
+      <nav class="flex flex-col gap-6 text-xl text-slate-400">
+        <span class="hover:text-[#00eaff]">📊</span>
+        <span class="hover:text-[#00eaff]">🧭</span>
+        <span class="hover:text-[#00eaff]">👤</span>
+        <span class="hover:text-[#00eaff]">⚙️</span>
+      </nav>
+    </aside>
+
+    <main class="flex-1 px-10 py-8">
+      <header class="flex items-center justify-between mb-8">
+        <div>
+          <h1 class="text-3xl font-semibold text-[#00eaff]">Mariam | Holy Graph</h1>
+          <p class="text-sm text-slate-400">Glassmorphism Cyberpunk Interface</p>
+        </div>
+        <div class="flex items-center gap-6">
+          <div>
+            <p class="text-xs uppercase text-slate-400">Level</p>
+            <p class="text-lg font-semibold">{{ player.level if player else 1 }}</p>
+          </div>
+          <div>
+            <p class="text-xs uppercase text-slate-400">HP</p>
+            <div class="w-40 h-3 bg-slate-800 rounded-full overflow-hidden">
+              <div class="h-full bg-red-500" style="width: {{ player.hp if player else 100 }}%"></div>
+            </div>
+          </div>
+          <div>
+            <p class="text-xs uppercase text-slate-400">MP</p>
+            <div class="w-40 h-3 bg-slate-800 rounded-full overflow-hidden">
+              <div class="h-full bg-blue-500" style="width: {{ player.mana if player else 100 }}%"></div>
+            </div>
+          </div>
+          <div>
+            <p class="text-xs uppercase text-slate-400">Gold</p>
+            <p class="text-lg font-semibold" id="wallet-count">{{ player.wallet if player else 0 }}</p>
+          </div>
+        </div>
+      </header>
+
+      <section class="grid grid-cols-1 xl:grid-cols-4 gap-6">
+        <div class="xl:col-span-3 glass rounded-3xl p-6 relative overflow-hidden">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold text-[#00eaff]">Quest Network</h2>
+            <span class="text-xs text-slate-400">Nodes synchronize with active mode</span>
+
           </div>
           <div class="relative w-full h-[520px] rounded-2xl bg-[#0f172a]/50 border border-slate-800 overflow-hidden">
             <svg class="absolute inset-0 w-full h-full">
@@ -201,6 +279,24 @@
             <div class="w-full h-3 bg-slate-800 rounded-full overflow-hidden">
               <div class="h-full bg-blue-500" style="width: {{ player.mana if player else 100 }}%"></div>
             </div>
+            <h2 class="text-lg font-semibold text-[#00eaff]">Black Hole Status</h2>
+            <p class="text-xs text-slate-400">Survival Countdown</p>
+          </div>
+          {% set danger = player and player.black_hole_days < 10 %}
+          <div class="flex items-center justify-center">
+            <div class="w-32 h-32 rounded-full border-4 border-[#00eaff]/60 flex items-center justify-center text-center {{ 'pulse-danger' if danger else '' }}">
+              <div>
+                <p class="text-xs uppercase text-slate-400">Days Remaining</p>
+                <p class="text-3xl font-semibold {{ 'text-red-400' if danger else 'text-[#00eaff]' }}">
+                  {{ player.black_hole_days if player else 100 }}
+                </p>
+              </div>
+            </div>
+          </div>
+          <div class="text-sm text-slate-300 space-y-2">
+            <p>Target Hours: <span class="text-[#00eaff]">{{ player.daily_target_hours if player else 17 }}</span></p>
+            <p>Survival Rule: <span class="text-slate-400">&lt;4h loses a day, &gt;10h gains a day.</span></p>
+
           </div>
         </div>
       </section>
@@ -209,6 +305,9 @@
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-lg font-semibold text-[#00eaff]">Logtime Graph</h2>
           <span class="text-xs text-slate-400">Last 90 Days</span>
+          <h2 class="text-lg font-semibold text-[#00eaff]">Activity Heatmap</h2>
+          <span class="text-xs text-slate-400">Last 3 Months</span>
+
         </div>
         <div class="heatmap-grid">
           {% for day in heatmap_days %}
@@ -221,10 +320,18 @@
           <span class="heatmap-cell level-active"></span>
           <span class="heatmap-cell level-burning"></span>
           <span>5h+</span>
+          <span class="heatmap-cell level-0"></span>
+          <span class="heatmap-cell level-1"></span>
+          <span class="heatmap-cell level-2"></span>
+          <span class="heatmap-cell level-3"></span>
+          <span class="heatmap-cell level-4"></span>
+          <span>10h+</span>
+
         </div>
       </section>
     </main>
   </div>
+
 
   <div id="quest-modal" class="fixed inset-0 bg-black/70 hidden items-center justify-center">
     <div class="bg-[#111827] border border-[#00eaff] rounded-2xl p-6 w-full max-w-lg shadow-2xl">
@@ -235,6 +342,7 @@
       <p class="text-sm text-slate-400 mb-4">Prepare for active mode. Timing is strict.</p>
       <div class="flex items-center gap-4 mb-4">
         <button id="start-btn" class="px-4 py-2 bg-[#00eaff]/20 border border-[#00eaff] rounded-lg">Start Timer</button>
+
         <button id="stop-btn" class="px-4 py-2 bg-red-500/20 border border-red-400 rounded-lg">Stop</button>
         <a id="subject-link" href="#" class="text-sm text-[#00eaff] underline">Download Subject</a>
       </div>
@@ -243,6 +351,7 @@
         <label class="text-sm text-slate-400">Submit Proof</label>
         <input type="file" name="submission" class="block w-full text-sm text-slate-300" required />
         <button type="submit" class="px-4 py-2 bg-[#00eaff]/20 border border-[#00eaff] rounded-lg">Submit Proof</button>
+
       </form>
       <p id="submission-result" class="text-sm text-slate-300 mt-3"></p>
     </div>

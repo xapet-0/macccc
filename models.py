@@ -10,6 +10,7 @@ class Player(db.Model):
     __tablename__ = "players"
 
     id = db.Column(db.Integer, primary_key=True)
+
     level = db.Column(db.Integer, nullable=False, default=1)
     xp = db.Column(db.Integer, nullable=False, default=0)
     hp = db.Column(db.Integer, nullable=False, default=100)
@@ -18,6 +19,9 @@ class Player(db.Model):
     last_active_date = db.Column(db.Date)
     wallet = db.Column(db.Integer, nullable=False, default=0)
 
+    black_hole_days = db.Column(db.Integer, nullable=False, default=100)
+    daily_target_hours = db.Column(db.Float, nullable=False, default=17.0)
+
 
 class DailyLog(db.Model):
     __tablename__ = "daily_logs"
@@ -25,6 +29,7 @@ class DailyLog(db.Model):
     date = db.Column(db.Date, primary_key=True)
     total_seconds = db.Column(db.Integer, nullable=False, default=0)
     status = db.Column(db.String(20), nullable=False, default="FROZEN")
+
 
 
 class Quest(db.Model):
@@ -40,6 +45,7 @@ class Quest(db.Model):
     graph_x = db.Column(db.Integer, nullable=False, default=0)
     graph_y = db.Column(db.Integer, nullable=False, default=0)
     dependencies = db.Column(db.String(255))
+
     loot = db.relationship("Loot", backref="quest", uselist=False, cascade="all, delete-orphan")
 
 
@@ -61,3 +67,12 @@ class Log(db.Model):
     end_time = db.Column(db.DateTime)
     duration_minutes = db.Column(db.Integer, nullable=False, default=0)
     activity_type = db.Column(db.String(50), nullable=False)
+codex/setup-initial-flask-app-and-database-schema-hxpd6h
+
+
+class DailyLog(db.Model):
+    __tablename__ = "daily_logs"
+
+    date = db.Column(db.Date, primary_key=True)
+    total_hours = db.Column(db.Float, nullable=False, default=0.0)
+    status = db.Column(db.String(20), nullable=False, default="FROZEN")
